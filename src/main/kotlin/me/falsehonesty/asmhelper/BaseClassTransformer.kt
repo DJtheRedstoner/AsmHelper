@@ -16,6 +16,7 @@ abstract class BaseClassTransformer : IClassTransformer {
 
         classLoader.addTransformerExclusion("kotlin.")
         classLoader.addTransformerExclusion("me.falsehonesty.asmhelper.")
+        classLoader.addTransformerExclusion("org.objenesis.")
         classLoader.addTransformerExclusion(this.javaClass.name)
 
         setup(classLoader)

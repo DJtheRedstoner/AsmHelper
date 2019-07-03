@@ -4,46 +4,61 @@ import me.falsehonesty.asmhelper.BaseClassTransformer
 import me.falsehonesty.asmhelper.dsl.*
 import me.falsehonesty.asmhelper.dsl.instructions.*
 import me.falsehonesty.asmhelper.dsl.writers.AccessType
+import me.falsehonesty.asmhelper.dsl.writers.asm
 
 class TestClassTransformer : BaseClassTransformer() {
     override fun makeTransformers() {
         injectCountField()
         injectCountPrint()
-        injectDrawSplashScreen()
+//        injectDrawSplashScreen()
 
         world()
     }
 
-    private fun injectCountPrint() = overwrite {
+    private fun injectCountPrint() = inject {
         className = "net.minecraft.client.gui.GuiNewChat"
         methodName = "printChatMessage"
         methodDesc = "(Lnet/minecraft/util/IChatComponent;)V"
-//        at = At(InjectionPoint.HEAD)
+        at = At(InjectionPoint.HEAD)
 
-        insnList {
-            field(FieldAction.GET_STATIC, "java/lang/System", "out", "Ljava/io/PrintStream;")
-            createInstance("java/lang/StringBuilder", "()V")
+//        insnList {
+//            field(FieldAction.GET_STATIC, "java/lang/System", "out", "Ljava/io/PrintStream;")
+//            createInstance("java/lang/StringBuilder", "()V")
+//
+//            val testMessagesSent = Descriptor("net/minecraft/client/gui/GuiNewChat", "testMessagesSent", "I")
+//
+//            getLocalField(testMessagesSent)
+//            invoke(InvokeType.VIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;")
+//
+//            invoke(InvokeType.VIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;") {
+//                argument {
+//                    ldc(" messages sent so far")
+//                }
+//            }
+//
+//            invoke(InvokeType.VIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
+//            invoke(InvokeType.VIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/Object;)V")
+//
+//            updateLocalField(testMessagesSent) {
+//                bipush(1)
+//                iadd()
+//            }
+//
+//            methodReturn()
+//        }
 
-            val testMessagesSent = Descriptor("net/minecraft/client/gui/GuiNewChat", "testMessagesSent", "I")
+        val testMessagesSent = shadowField<Int>()
 
-            getLocalField(testMessagesSent)
-            invoke(InvokeType.VIRTUAL, "java/lang/StringBuilder", "append", "(I)Ljava/lang/StringBuilder;")
+        val getChatOpen = shadowMethod<Boolean>()
 
-            invoke(InvokeType.VIRTUAL, "java/lang/StringBuilder", "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;") {
-                argument {
-                    ldc(" messages sent so far")
-                }
-            }
+        code {
+            TestObj.printWhenChatted(testMessagesSent)
 
-            invoke(InvokeType.VIRTUAL, "java/lang/StringBuilder", "toString", "()Ljava/lang/String;")
-            invoke(InvokeType.VIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/Object;)V")
+//            val open = getChatOpen()
+            TestObj.doTHing(getChatOpen())
+//            deleteChatLine()
 
-            updateLocalField(testMessagesSent) {
-                bipush(1)
-                iadd()
-            }
-
-            methodReturn()
+//            testMessagesSent++
         }
     }
 
@@ -76,21 +91,29 @@ class TestClassTransformer : BaseClassTransformer() {
         }
     }
 
-    private fun injectDrawSplashScreen() = overwrite {
-        className = "net.minecraft.client.Minecraft"
-        methodName = "drawSplashScreen"
-        methodDesc = "(Lnet/minecraft/client/renderer/texture/TextureManager;)V"
+//    private fun injectDrawSplashScreen() = overwrite {
+//        className = "net.minecraft.client.Minecraft"
+//        methodName = "drawSplashScreen"
+//        methodDesc = "(Lnet/minecraft/client/renderer/texture/TextureManager;)V"
+//
+//        insnList {
+//            invokeKOBjectFunction(
+//                "me/falsehonesty/asmhelper/example/TestHelper",
+//                "drawSplash",
+//                "()V"
+//            )
+//
+//            methodReturn()
+//        }
+//    }
+}
 
-        insnList {
-            placeLabel(makeLabel())
+object TestObj {
+    fun printWhenChatted(messages: Int) {
+        println("$messages printed so far.")
+    }
 
-            invokeKOBjectFunction(
-                "me/falsehonesty/asmhelper/example/TestHelper",
-                "drawSplash",
-                "()V"
-            )
-
-            methodReturn()
-        }
+    fun doTHing(b: Boolean) {
+        println("open? $b")
     }
 }
