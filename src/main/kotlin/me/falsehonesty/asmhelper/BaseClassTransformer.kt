@@ -1,5 +1,6 @@
 package me.falsehonesty.asmhelper
 
+import me.falsehonesty.asmhelper.printing.log
 import net.minecraft.launchwrapper.IClassTransformer
 import net.minecraft.launchwrapper.LaunchClassLoader
 import org.apache.logging.log4j.LogManager
@@ -8,7 +9,6 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.tree.ClassNode
 
 abstract class BaseClassTransformer : IClassTransformer {
-    private val logger = LogManager.getLogger("AsmHelper")
     private var calledSetup = false
 
     private fun setup() {
@@ -49,7 +49,7 @@ abstract class BaseClassTransformer : IClassTransformer {
         }
 
         AsmHelper.classReplacers[transformedName]?.let { classFile ->
-            logger.info("Completely replacing {} with data from {}.", transformedName, classFile)
+            log("Completely replacing $transformedName with data from $classFile.")
 
             return loadClassResource(classFile)
         }
@@ -58,14 +58,14 @@ abstract class BaseClassTransformer : IClassTransformer {
             .filter { it.className.replace('/', '.') == transformedName }
             .ifEmpty { return basicClass }
 
-        logger.info("Transforming class {}", transformedName)
+        log("Transforming class $transformedName")
 
         val classReader = ClassReader(basicClass)
         val classNode = ClassNode()
         classReader.accept(classNode, ClassReader.SKIP_FRAMES)
 
         writers.forEach {
-            logger.info("Applying AsmWriter {} to class {}", it, transformedName)
+            log("Applying AsmWriter $it to class $transformedName")
 
             it.transform(classNode)
         }
@@ -74,7 +74,7 @@ abstract class BaseClassTransformer : IClassTransformer {
         try {
             classNode.accept(classWriter)
         } catch (e: Throwable) {
-            logger.error("Exception when transforming {} : {}", transformedName, e.javaClass.simpleName)
+            log("Exception when transforming $transformedName : ${e.javaClass.simpleName}")
             e.printStackTrace()
         }
 

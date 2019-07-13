@@ -3,21 +3,14 @@ package me.falsehonesty.asmhelper.dsl.writers
 import me.falsehonesty.asmhelper.AsmHelper
 import me.falsehonesty.asmhelper.dsl.AsmWriter
 import me.falsehonesty.asmhelper.dsl.At
+import me.falsehonesty.asmhelper.dsl.code.CodeBlock
 import me.falsehonesty.asmhelper.dsl.code.InjectCodeBuilder
-import me.falsehonesty.asmhelper.dsl.instructions.Descriptor
 import me.falsehonesty.asmhelper.dsl.instructions.InsnListBuilder
-import me.falsehonesty.asmhelper.java.NullReturner
-import org.jetbrains.annotations.Contract
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InsnList
 import org.objectweb.asm.tree.MethodNode
-import org.objenesis.ObjenesisHelper
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
 
 class InjectWriter(
     className: String,
@@ -25,7 +18,7 @@ class InjectWriter(
     private val methodDesc: String,
     private val at: At,
     private val insnListBuilder: (InsnListBuilder.() -> Unit)?,
-    private val codeBuilder: (() -> Unit)?
+    private val codeBlockClassName: String?
 ) : AsmWriter(className) {
     override fun transform(classNode: ClassNode) {
         classNode.methods
@@ -44,10 +37,8 @@ class InjectWriter(
 
             builder.build()
         } else {
-            val clazz = codeBuilder!!.javaClass
-            val clazzName = clazz.name
-            val clazzPath = clazzName.replace('.', '/') + ".class"
-            val clazzInputStream = clazz.classLoader.getResourceAsStream(clazzPath)
+            val clazzPath = codeBlockClassName!!.replace('.', '/') + ".class"
+            val clazzInputStream = this.javaClass.classLoader.getResourceAsStream(clazzPath)
 
             val clazzReader = ClassReader(clazzInputStream)
             val codeClassNode = ClassNode()
@@ -55,7 +46,7 @@ class InjectWriter(
 
             val codeBuilder = InjectCodeBuilder(codeClassNode, classNode, method)
 
-            codeBuilder.codeBlockToInstructions()
+            codeBuilder.transformToInstructions()
         }
 
         nodes.forEach { insertToNode(method, it, instructions) }
@@ -91,13 +82,13 @@ class InjectWriter(
         lateinit var methodDesc: String
         lateinit var at: At
         var insnListBuilder: (InsnListBuilder.() -> Unit)? = null
-        var codeBuilder: (() -> Unit)? = null
+        var codeBlockClassName: String? = null
 
         @Throws(IllegalStateException::class)
         fun build(): AsmWriter {
             return InjectWriter(
                 className, methodName, methodDesc,
-                at, insnListBuilder, codeBuilder
+                at, insnListBuilder, codeBlockClassName
             )
         }
 
@@ -105,15 +96,9 @@ class InjectWriter(
             this.insnListBuilder = config
         }
 
-        fun code(code: () -> Unit) {
-            this.codeBuilder = code
+        fun codeBlock(code: CodeBlock.() -> Unit) {
+            this.codeBlockClassName = code.javaClass.name + "$1"
         }
-
-        inline fun <reified T> shadowField(): T = ObjenesisHelper.newInstance(T::class.java)
-
-        inline fun <reified L> shadowListField(): List<L> = shadowField<ArrayList<L>>()
-
-        inline fun <reified R> shadowMethod(): () -> R = { ObjenesisHelper.newInstance(R::class.java) }
     }
 }
 

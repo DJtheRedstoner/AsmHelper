@@ -27,4 +27,6 @@ object AsmHelper {
 
         println("Selected the $remapper remapper")
     }
+
+    var verbose = System.getProperty("asmhelper.verbose", "false").toBoolean()
 }
