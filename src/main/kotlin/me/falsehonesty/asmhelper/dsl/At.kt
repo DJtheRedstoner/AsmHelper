@@ -45,7 +45,7 @@ sealed class InjectionPoint {
      * optionally one can specify the exact opcode to inject to by specifying [ordinal].
      * This value (0 indexed) is the index of the operation you want.
      */
-    class RETURN(val ordinal: Int? = null) : InjectionPoint()
+    data class RETURN(val ordinal: Int? = null) : InjectionPoint()
 
     /**
      * Injects to where an invoke operation is made.
@@ -54,7 +54,7 @@ sealed class InjectionPoint {
      * optionally one can specify the exact opcode to inject to by specifying [ordinal].
      * This value (0 indexed) is the index of the operation you want.
      */
-    class INVOKE(val descriptor: Descriptor, val ordinal: Int? = null) : InjectionPoint()
+    data class INVOKE(val descriptor: Descriptor, val ordinal: Int? = null) : InjectionPoint()
 
     /**
      * Injects into the very very end of a method, before the final return.

@@ -6,6 +6,8 @@ import me.falsehonesty.asmhelper.dsl.At
 import me.falsehonesty.asmhelper.dsl.code.CodeBlock
 import me.falsehonesty.asmhelper.dsl.code.InjectCodeBuilder
 import me.falsehonesty.asmhelper.dsl.instructions.InsnListBuilder
+import me.falsehonesty.asmhelper.printing.prettyString
+import me.falsehonesty.asmhelper.printing.verbose
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
@@ -30,6 +32,17 @@ class InjectWriter(
 
     private fun injectInsnList(method: MethodNode, classNode: ClassNode) {
         val nodes = at.getTargetedNodes(method)
+
+        if (nodes.isEmpty()) {
+            verbose("$this matched no nodes. For context: ")
+            verbose(method.instructions.prettyString())
+            return
+        }
+
+        verbose("Matched ${nodes.size} nodes.")
+        nodes.forEachIndexed { index, abstractInsnNode ->
+            verbose("$index.    ${abstractInsnNode.prettyString()}")
+        }
 
         val instructions = if (insnListBuilder != null) {
             val builder = InsnListBuilder(method)
