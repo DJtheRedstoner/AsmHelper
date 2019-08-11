@@ -170,6 +170,12 @@ class InsnListBuilder(val toInjectInto: MethodNode) : Opcodes {
         insn(InsnNode(RETURN))
     }
 
+    fun findLabel(number: Int) = toInjectInto.instructions
+        .iterator()
+        .asSequence()
+        .filter { it is LabelNode }
+        .elementAt(number)
+
     /**
      * Creates a new label, but does not place it anywhere in the bytecode,
      * it simply gives you a reference to it.
