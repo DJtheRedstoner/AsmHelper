@@ -173,7 +173,9 @@ class InsnListBuilder(val toInjectInto: MethodNode) : Opcodes {
     fun findLabel(number: Int) = toInjectInto.instructions
         .iterator()
         .asSequence()
-        .filter { it is LabelNode }
+        .toList()
+        .filterIsInstance<LabelNode>()
+        .sortedBy { it.label.offset }
         .elementAt(number)
 
     /**
